@@ -1,6 +1,5 @@
 import sys
 import time
-import syslog
 import json
 import redis
 
@@ -50,17 +49,17 @@ class RedisQueue:
         result = self.r.blpop(self.list_key, self.timeout)
         if result is None:
             raise StopIteration
-        return result[0]
+        return result
 
 
 def run_worker(func, on_failure_func, config, worker_id):
     item, r = None, None
     while True:
         try:
-            r = RedisQueue(**config)
+            r = RedisQueue(**config) # TODO rename r
             sys.stdout.write('worker {worker_id} started\n'.format(worker_id=worker_id))
-            for item in r:
-                func(item, worker_id)
+            for key_name, item in r:
+                func(item.decode('utf-8'), worker_id)
         except (KeyboardInterrupt, SystemExit):
             sys.stdout.write('worker {worker_id} stopped\n'.format(worker_id=worker_id))
             r.first_inline_send(item)
