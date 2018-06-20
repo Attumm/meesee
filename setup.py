@@ -4,7 +4,7 @@ setup(
     name='meesee',
     author='Melvin Bijman',
     author_email='bijman.m.m@gmail.com',
-    version='0.3',
+    version='0.4',
     py_modules=['meesee'],
     install_requires=['redis==2.10.6'],
     license='MIT',
@@ -19,8 +19,6 @@ setup(
 
         'License :: OSI Approved :: MIT License',
 
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
