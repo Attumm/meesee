@@ -52,14 +52,14 @@ class RedisQueue:
         return result
 
 
-def run_worker(func, on_failure_func, config, worker_id):
+def run_worker(func, func_kwargs, on_failure_func, config, worker_id):
     item, r = None, None
     while True:
         try:
             r = RedisQueue(**config) # TODO rename r
             sys.stdout.write('worker {worker_id} started\n'.format(worker_id=worker_id))
             for key_name, item in r:
-                func(item.decode('utf-8'), worker_id)
+                func(item.decode('utf-8'), worker_id, **func_kwargs)
         except (KeyboardInterrupt, SystemExit):
             sys.stdout.write('worker {worker_id} stopped\n'.format(worker_id=worker_id))
             r.first_inline_send(item)
@@ -75,9 +75,9 @@ def run_worker(func, on_failure_func, config, worker_id):
             break
 
 
-def startapp(func, workers=10, config=config, on_failure_func=None):
+def startapp(func, func_kwargs={}, workers=10, config=config, on_failure_func=None):
     p = Pool(workers)
-    args = ((func, on_failure_func, config, worker_id) for worker_id in range(1, workers+1))
+    args = ((func, func_kwargs, on_failure_func, config, worker_id) for worker_id in range(1, workers+1))
     try:
         p.starmap(run_worker, args)
     except (KeyboardInterrupt, SystemExit):
