@@ -81,7 +81,7 @@ def startapp(func, func_kwargs={}, workers=10, config=config, on_failure_func=No
     try:
         p.starmap(run_worker, args)
     except (KeyboardInterrupt, SystemExit):
-        sys.stdout.write('Starting Gracefull exit\n')
+        sys.stdout.write('Starting Graceful exit\n')
         p.close()
         p.join()
     finally:
