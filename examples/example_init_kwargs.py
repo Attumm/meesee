@@ -14,7 +14,7 @@ config = {
 }
 
 
-class SchroderCat:
+class SchrodingerCat:
     def __init__(self, name):
         self.name = name
         self.alive = None
@@ -38,7 +38,7 @@ def produce(items):
         r.send(i)
 
 
-def myfunc(item, worker_id, ana, bob, citrus):
+def my_func(item, worker_id, ana, bob, citrus):
     time.sleep(1)
     ana.look_in_the_box()
     bob.look_in_the_box()
@@ -51,9 +51,8 @@ if __name__ == "__main__":
     produce(100)
 
     names = ['ana', 'bob', 'citrus']
-    kwargs = {name: SchroderCat for name in names}
+    kwargs = {name: SchrodingerCat for name in names}
     init_kwargs = {name: {'name': name} for name in names}
 
-
-    # stop with keyboard intrupped
-    startapp(myfunc, workers=10, config=config, func_kwargs=kwargs, init_kwargs=init_kwargs)
+    # stop with keyboard interrupt
+    startapp(my_func, workers=10, config=config, func_kwargs=kwargs, init_kwargs=init_kwargs)

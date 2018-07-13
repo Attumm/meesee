@@ -9,18 +9,21 @@ config = {
     "maxsize": 100
 }
 
+
 def produce(items):
     r = RedisQueue(**config)
     for i in range(items):
         r.send(i)
 
-def myfunc(item, worker_id):
+
+def my_func(item, worker_id):
     print("hello, look at me")
     time.sleep(1)
     print('finished item', locals())
 
+
 if __name__ == "__main__":
     # produce 10 items
     produce(10)
-    # stop with keyboard intrupped 
-    startapp(myfunc, workers=10, config=config)
+    # stop with keyboard interrupt
+    startapp(my_func, workers=10, config=config)

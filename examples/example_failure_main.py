@@ -9,9 +9,6 @@ config = {
     "maxsize": 100
 }
 
-###
-# Handle failed func
-
 
 def produce(items):
     r = RedisQueue(**config)
@@ -32,6 +29,7 @@ def my_failure_func(item, exception, r_instance, worker_id):
     int_item = int(item.decode('utf-8'))
     # handle item, and resend to queue with item minus one
     r_instance.send(int_item-1)
+
 
 if __name__ == "__main__":
     produce(10)

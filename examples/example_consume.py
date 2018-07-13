@@ -9,9 +9,10 @@ config = {
 }
 
 
-def myfunc(item, worker_id):
+def my_func(item, worker_id):
     print('{worker_id} hello, look at me'.format(worker_id=worker_id))
+
 
 if __name__ == '__main__':
     workers = int(sys.argv[sys.argv.index('-w')+1]) if '-w' in sys.argv else 10
-    startapp(myfunc, workers=workers, config=config)
+    startapp(my_func, workers=workers, config=config)

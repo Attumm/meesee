@@ -23,7 +23,7 @@ class RedisQueue:
         self.timeout = timeout
 
     def first_inline_send(self, item):
-        #TODO rename method
+        # TODO rename method
         self.r.lpush(self.list_key, item)
     
     def send_to(self, key, item):
@@ -76,7 +76,7 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
     while True:
         try:
             func_kwargs = init_add(func_kwargs, init_items, init_kwargs)
-            r = RedisQueue(**config) # TODO rename r
+            r = RedisQueue(**config)  # TODO rename r
             sys.stdout.write('worker {worker_id} started\n'.format(worker_id=worker_id))
             for key_name, item in r:
                 func(item.decode('utf-8'), worker_id, **func_kwargs)
