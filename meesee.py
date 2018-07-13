@@ -57,20 +57,25 @@ class InitFail(Exception):
     pass
 
 
-def init_add(kwargs, init_kwargs):
+def init_add(func_kwargs, init_items, init_kwargs):
     try:
         for name, config in init_kwargs.items():
-            kwargs[name] = kwargs[name](**config)
+            func_kwargs[name] = init_items[name](**config)
     except TypeError as e:
         raise InitFail from e
-    return kwargs
+    return func_kwargs
+
+
+def setup_init_items(func_kwargs, init_kwargs):
+    return {name: func_kwargs[name] for name in init_kwargs.keys()}
 
 
 def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs):
     item, r = None, None
+    init_items = setup_init_items(func_kwargs, init_kwargs)
     while True:
         try:
-            func_kwargs = init_add(func_kwargs, init_kwargs)
+            func_kwargs = init_add(func_kwargs, init_items, init_kwargs)
             r = RedisQueue(**config) # TODO rename r
             sys.stdout.write('worker {worker_id} started\n'.format(worker_id=worker_id))
             for key_name, item in r:
