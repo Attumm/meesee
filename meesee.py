@@ -17,10 +17,21 @@ config = {
 class RedisQueue:
     def __init__(self, namespace, key, redis_config, maxsize=None, timeout=None):
         self.r = redis.Redis(**redis_config)
-        self.list_key = '{}:{}'.format(namespace, key)
+        self.key = key
         self.namespace = namespace
         self.maxsize = maxsize
         self.timeout = timeout
+        self.list_key = self.format_list_key(namespace, key)
+
+    def format_list_key(self, key, namespace):
+        return '{}:{}'.format(namespace, key)
+
+    def set_list_key(self, key=None, namespace=None):
+        if key is not None:
+            self.key = key
+        if namespace is not None:
+            self.namespace = namespace
+        self.list_key = self.format_list_key(self.namespace, self.key)
 
     def first_inline_send(self, item):
         # TODO rename method
@@ -71,6 +82,11 @@ def setup_init_items(func_kwargs, init_kwargs):
 
 
 def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs):
+    if isinstance(func, list):
+        func = func[worker_id%len(func)]
+    if isinstance(config, list):
+        config = config[worker_id%len(config)]
+
     item, r = None, None
     init_items = setup_init_items(func_kwargs, init_kwargs)
     while True:
