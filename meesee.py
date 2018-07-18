@@ -110,6 +110,7 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
             if on_failure_func is not None:
                 sys.stdout.write('worker {worker_id} running failure handler {e}\n'.format(worker_id=worker_id, e=e))
                 on_failure_func(item, e, r, worker_id)
+            item = None
             time.sleep(0.1)  # Throttle restarting
 
         if config.get('timeout') is not None:
