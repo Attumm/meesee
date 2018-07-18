@@ -102,7 +102,8 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
             break
         except (KeyboardInterrupt, SystemExit):
             sys.stdout.write('worker {worker_id} stopped\n'.format(worker_id=worker_id))
-            r.first_inline_send(item)
+            if item is not None:
+                r.first_inline_send(item)
             break
         except Exception as e:
             sys.stdout.write('worker {worker_id} failed reason {e}\n'.format(worker_id=worker_id, e=e))
