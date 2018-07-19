@@ -102,13 +102,15 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
             break
         except (KeyboardInterrupt, SystemExit):
             sys.stdout.write('worker {worker_id} stopped\n'.format(worker_id=worker_id))
-            r.first_inline_send(item)
+            if item is not None:
+                r.first_inline_send(item)
             break
         except Exception as e:
             sys.stdout.write('worker {worker_id} failed reason {e}\n'.format(worker_id=worker_id, e=e))
             if on_failure_func is not None:
                 sys.stdout.write('worker {worker_id} running failure handler {e}\n'.format(worker_id=worker_id, e=e))
                 on_failure_func(item, e, r, worker_id)
+            item = None
             time.sleep(0.1)  # Throttle restarting
 
         if config.get('timeout') is not None:
