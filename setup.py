@@ -4,7 +4,7 @@ setup(
     name='meesee',
     author='Melvin Bijman',
     author_email='bijman.m.m@gmail.com',
-    version='0.6',
+    version='0.8',
     py_modules=['meesee'],
     install_requires=['redis==2.10.6'],
     license='MIT',
