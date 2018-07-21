@@ -23,7 +23,7 @@ class RedisQueue:
         self.timeout = timeout
         self.list_key = self.format_list_key(namespace, key)
 
-    def format_list_key(self, key, namespace):
+    def format_list_key(self, namespace, key):
         return '{}:{}'.format(namespace, key)
 
     def set_list_key(self, key=None, namespace=None):
