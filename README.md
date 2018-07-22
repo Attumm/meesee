@@ -1,6 +1,8 @@
 # Meesee
+[![Build Status](https://travis-ci.org/Attumm/meesee.svg?branch=master)](https://travis-ci.org/Attumm/meesee)
 
 Task queue, Long lived workers process parallelization, with Redis as backend.
+
 
 ## Getting Started
 
