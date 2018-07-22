@@ -34,7 +34,7 @@ def append_worker_id(item, worker_id, key, r):
 
 def incr_and_append_worker_id(item, worker_id, key, r):
     key_amount = 'test:amount'
-    key_worker_id = 'test:workerids1'
+    key_worker_id = 'test:workerids'
     increment_by_one(item, worker_id, key_amount, r)
     append_worker_id(item, worker_id, key_worker_id, r)
 
@@ -92,7 +92,7 @@ class TestAmounts(unittest.TestCase):
         produce(expected)
         
         key = 'test:amount'
-        key_workerids = 'test:workerids1'
+        key_workerids = 'test:workerids'
         kwargs = {'key':key, 'r': RedisQueue}
         init_kwargs = {'r': example_config}
 
