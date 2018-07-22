@@ -85,8 +85,8 @@ class TestAmounts(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_all_workers_are_present(self):
-        expected = 123
-        expected_workers_amount = 10
+        expected = 268
+        expected_workers_amount = 5
         expected_workers = {i for i in range(1, expected_workers_amount+1)}
 
         produce(expected)
