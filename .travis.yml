@@ -4,9 +4,10 @@ cache: pip
 services:
   - redis-server
 python:
-  - 3.4
-  - 3.5
-  - 3.6
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7-dev"
 install: travis_retry pip install tox-travis
 script:
 - tox
