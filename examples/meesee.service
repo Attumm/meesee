@@ -1,0 +1,18 @@
+# Override the variables, user, path to installation, path to virtualenv
+[Unit]
+Description=Meesee Distributed Computing
+After=syslog.target
+Requires=redis.service
+
+[Service]
+Type=simple
+User=<user>
+Group=<user>
+WorkingDirectory=<path to installation>
+ExecStart=<path_to_virtual_env>/bin/python -u <path to installation>/examples/example_consume.py
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=Meesee
+
+[Install]
+WantedBy=multi-user.target
