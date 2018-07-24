@@ -4,7 +4,13 @@ import time
 import redis
 
 from meesee import startapp, RedisQueue
-from meesee import config as example_config
+
+example_config = {
+    "namespace": "test",
+    "key": "tasks",
+    "redis_config": {},
+    "maxsize": 1000
+}
 
 redis_instance = redis.StrictRedis()
 
@@ -131,7 +137,6 @@ class TestReceivedItemsEqualsSendItems(unittest.TestCase):
         result = [i.decode('utf-8') for i in redis_instance.lrange(result_key, 0, -1)]
         self.assertEqual(sorted(result), sorted(expected))
 
-
     def test_items_send_are_handled_multiple_worker(self):
         expected = ['1', '2', '3']
         produce_items(expected)
@@ -144,8 +149,31 @@ class TestReceivedItemsEqualsSendItems(unittest.TestCase):
         startapp(append_item, workers=5, config=example_config, func_kwargs=kwargs, init_kwargs=init_kwargs)
 
         result = [i.decode('utf-8') for i in redis_instance.lrange(result_key, 0, -1)]
-        
         self.assertEqual(sorted(result), sorted(expected))
+
+
+def sysexit(item, *args):
+    if item == 'still_worked_on':
+        time.sleep(0.1)
+        raise SystemExit
+
+
+class TestOSSignal(unittest.TestCase):
+
+    def tearDown(self):
+        list_key = '{}:{}'.format(example_config['namespace'], example_config['key'])
+        keys_to_remove = ['test:items', 'test:result', list_key]
+        redis_instance.delete(*keys_to_remove)
+
+    def test_handle_sys(self):
+        items = ['1', '2', 'still_worked_on']
+        produce_items(items)
+        list_key = '{}:{}'.format(example_config['namespace'], example_config['key'])
+
+        startapp(sysexit, workers=5, config=example_config)
+
+        result = [i.decode('utf-8') for i in redis_instance.lrange(list_key, 0, -1)]
+        self.assertEqual(result, ['still_worked_on'])
 
 
 if __name__ == '__main__':

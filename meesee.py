@@ -95,7 +95,7 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
             r = RedisQueue(**config)  # TODO rename r
             sys.stdout.write('worker {worker_id} started\n'.format(worker_id=worker_id))
             for key_name, item in r:
-                func(item.decode('utf-8'), worker_id, **func_kwargs)
+                _, item = func(item.decode('utf-8'), worker_id, **func_kwargs), None
         except InitFail:
             sys.stdout.write('worker {worker_id} initialization failed\n'.format(worker_id=worker_id))
             traceback.print_exc()
