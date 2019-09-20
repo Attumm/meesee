@@ -47,7 +47,7 @@ class RedisQueue:
            If size is above max size, the operation will keep the size the same.
            Note that if does not resize the list to maxsize.
         """
-        if self.maxsize is not None and self.r.llen(self.list_key) >= self.maxsize:
+        if self.maxsize is not None and len(self) >= self.maxsize:
             self.r.lpop(self.list_key)
         self.r.rpush(self.list_key, item)
 
@@ -62,6 +62,9 @@ class RedisQueue:
         if result is None:
             raise StopIteration
         return result
+    
+    def __len__(self):
+        return self.r.llen(self.list_key)
 
 
 class InitFail(Exception):
