@@ -14,6 +14,10 @@ config = {
 }
 
 
+class RedisQueueException(Exception):
+    pass
+
+
 class RedisQueue:
     def __init__(self, namespace, key, redis_config, maxsize=None, timeout=None):
         self.r = redis.Redis(**redis_config)
@@ -41,14 +45,9 @@ class RedisQueue:
         self.r.rpush('{}:{}'.format(self.namespace, key), item)
         
     def send(self, item):
-        """Adds item to the end of the Redis List.
-
-        Side-effects:
-           If size is above max size, the operation will keep the size the same.
-           Note that if does not resize the list to maxsize.
-        """
+        """Adds item to the end of the Redis List."""
         if self.maxsize is not None and len(self) >= self.maxsize:
-            self.r.lpop(self.list_key)
+            raise RedisQueueException('Cannot schedule item: queue exceeds maxsize')
         self.r.rpush(self.list_key, item)
 
     def send_dict(self, item):
