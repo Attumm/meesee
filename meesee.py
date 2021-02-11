@@ -10,7 +10,7 @@ config = {
     "namespace": "removeme",
     "key": "tasks",
     "redis_config": {},
-    "maxsize": 1000
+    "maxsize": 1000,
 }
 
 
@@ -49,6 +49,22 @@ class RedisQueue:
         """
         if self.maxsize is not None and len(self) >= self.maxsize:
             self.r.lpop(self.list_key)
+        self.r.rpush(self.list_key, item)
+
+    def send_unsafe(self, item):
+        """Adds item to the end of the Redis List.
+        Because there is no limit enforcement, this could completely fill the redis queue.
+        Causing issues down the line.
+        """
+        self.r.rpush(self.list_key, item)
+
+    def send_wait(self, item):
+        """Adds item to the end of the Redis List.
+        Side-effects:
+           If size is above max size, wait for 1 second and retry send operation.
+        """
+        while self.maxsize is not None and self.r.llen(self.list_key) >= self.maxsize:
+            time.sleep(1)
         self.r.rpush(self.list_key, item)
 
     def send_dict(self, item):
