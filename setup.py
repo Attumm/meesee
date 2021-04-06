@@ -17,6 +17,7 @@ setup(
     version='1.0.0',
     py_modules=['meesee'],
     install_requires=['redis==3.5.3'],
+    python_requires='>3.5',
     license='MIT',
 
     url='https://github.com/Attumm/meesee',
@@ -31,7 +32,6 @@ setup(
         'License :: OSI Approved :: MIT License',
 
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
