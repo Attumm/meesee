@@ -14,9 +14,9 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    version='0.9.4',
+    version='1.0.0',
     py_modules=['meesee'],
-    install_requires=['redis==2.10.6'],
+    install_requires=['redis==3.5.3'],
     license='MIT',
 
     url='https://github.com/Attumm/meesee',
@@ -35,5 +35,6 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
 )
