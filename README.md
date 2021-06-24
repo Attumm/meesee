@@ -1,5 +1,5 @@
 # Meesee
-[![Build Status](https://travis-ci.org/Attumm/meesee.svg?branch=master)](https://travis-ci.org/Attumm/meesee)
+[![Build Status](https://travis-ci.com/Attumm/meesee.svg?branch=main)](https://travis-ci.com/Attumm/meesee)
 
 Task queue, Long lived workers process parallelization, with Redis as backend.
 The project is still used in production and has to knowlegde been used in 3 companies in production setting.
