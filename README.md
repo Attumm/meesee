@@ -42,18 +42,6 @@ produce(10)
 
 Great, the placement of both scripts can be on any machine with connectivity to the redis instance.
 
-### Prerequisites
-
-#### Redis
-
-For Debian, Ubuntu
-```
-sudo apt-get install redis-server
-```
-For Centos, Red Hat
-```
-sudo yum install redis
-```
 
 ### Installing
 
@@ -63,6 +51,24 @@ Install meesee:
 ```
 $ . /path/to/virtualenv/bin/activate
 $  pip install meesee
+```
+
+### Prerequisites
+
+#### Redis
+
+For Docker
+```
+$ docker run --name some-redis -d redis
+```
+
+For Debian, Ubuntu
+```
+$ sudo apt-get install redis-server
+```
+For Centos, Red Hat
+```
+$ sudo yum install redis
 ```
 
 ## Authors
