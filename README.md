@@ -2,7 +2,21 @@
 [![Build Status](https://travis-ci.com/Attumm/meesee.svg?branch=main)](https://travis-ci.com/Attumm/meesee)
 
 Task queue, Long lived workers process parallelization, with Redis as backend.
-The project is still used in production and has to knowlegde been used in 3 companies in production setting.
+The project is used in production by three different companies.
+There are Meesee instances that have been running without maintenance or restarts for more than one year.
+
+Since the scope of the project is laser focussed on providing the following usecases.
+There are no outstanding feature requests, the project is stable and no code are needed at the moment.
+For feature request or additional information, an issue could be raised.
+For examples on how to use Meesee there are [examples](https://github.com/Attumm/meesee/tree/main/examples) available.
+
+
+1. Should be able to run for long periods, without maintenance or restarts.
+2. Restarting the service for maintenance or deployments, should not lead to missing messages.
+3. Should be reasonable fast and minimal amount of memory overhead for client and Redis instance.
+4. Should be able to schedule messages when workers are offline during deployment.
+5. Should not skip messages during certain scenario's such as heavy load.
+6. Should try to be as simple as possible to use, without a big learning curve. Distributed computing is hard enough by itself.
 
 ## Examples
 
@@ -55,7 +69,7 @@ $  pip install meesee
 
 ### Prerequisites
 
-#### Redis
+#### Redis instance
 
 For Docker
 ```
