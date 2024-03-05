@@ -14,7 +14,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    version='1.1.0',
+    version='1.2.0',
     py_modules=['meesee'],
     install_requires=['redis==4.5.5'],
     python_requires='>3.5',
@@ -39,5 +39,6 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
 )
