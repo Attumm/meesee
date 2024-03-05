@@ -16,6 +16,11 @@ config = {
 
 class RedisQueue:
     def __init__(self, namespace, key, redis_config, maxsize=None, timeout=None):
+        # TCP check if connection is alive, Sane defaults
+        redis_config.setdefault('socket_timeout', 30)
+        redis_config.setdefault('socket_keepalive', True)
+        # Ping check if connection is alive
+        # redis_config.setdefault('health_check_interval', 30)
         self.r = redis.Redis(**redis_config)
         self.key = key
         self.namespace = namespace
@@ -36,10 +41,10 @@ class RedisQueue:
     def first_inline_send(self, item):
         # TODO rename method
         self.r.lpush(self.list_key, item)
-    
+
     def send_to(self, key, item):
         self.r.rpush('{}:{}'.format(self.namespace, key), item)
-        
+
     def send(self, item):
         """Adds item to the end of the Redis List.
 
@@ -78,7 +83,7 @@ class RedisQueue:
         if result is None:
             raise StopIteration
         return result
-    
+
     def __len__(self):
         return self.r.llen(self.list_key)
 
@@ -102,9 +107,9 @@ def setup_init_items(func_kwargs, init_kwargs):
 
 def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs):
     if isinstance(func, list):
-        func = func[worker_id%len(func)]
+        func = func[worker_id % len(func)]
     if isinstance(config, list):
-        config = config[worker_id%len(config)]
+        config = config[worker_id % len(config)]
 
     item, r = None, None
     init_items = setup_init_items(func_kwargs, init_kwargs)
@@ -137,14 +142,13 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
 
 
 def startapp(func, func_kwargs={}, workers=10, config=config, on_failure_func=None, init_kwargs={}):
-    p = Pool(workers)
-    args = ((func, func_kwargs, on_failure_func, config, worker_id, init_kwargs) for worker_id in
-            range(1, workers + 1))
-    try:
-        p.starmap(run_worker, args)
-    except (KeyboardInterrupt, SystemExit):
-        sys.stdout.write('Starting Graceful exit\n')
-        p.close()
-        p.join()
-    finally:
-        sys.stdout.write('Clean shut down\n')
+    with Pool(workers) as p:
+        args = ((func, func_kwargs, on_failure_func, config, worker_id, init_kwargs)
+                for worker_id in range(1, workers + 1))
+        try:
+            p.starmap(run_worker, args)
+        except (KeyboardInterrupt, SystemExit):
+             sys.stdout.write('Starting Graceful exit\n')
+             p.close()
+             p.join()
+    sys.stdout.write('Clean shut down\n')
