@@ -16,7 +16,7 @@ setup(
 
     version='1.2.0',
     py_modules=['meesee'],
-    install_requires=['redis==4.5.5'],
+    install_requires=['redis>=4'],
     python_requires='>3.5',
     license='MIT',
 
