@@ -28,10 +28,9 @@ def my_failure_func(item, exception, r_instance, worker_id):
     print('failure callback', item, str(exception), worker_id)
     int_item = int(item.decode('utf-8'))
     # handle item, and resend to queue with item minus one
-    r_instance.send(int_item-1)
+    r_instance.send(int_item - 1)
 
 
 if __name__ == "__main__":
     produce(10)
     startapp(my_func, workers=10, config=config, on_failure_func=my_failure_func)
-
