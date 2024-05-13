@@ -1,6 +1,8 @@
 import smtplib
 from email.message import EmailMessage
 
+from meesee import RedisQueue
+
 
 def send_email(msg, to, from_, subject='default'):
     msg_email = EmailMessage()
@@ -15,6 +17,7 @@ def send_email(msg, to, from_, subject='default'):
     s.quit()
     return True
 
+
 config = {
     "namespace": "removeme",
     "key": "tasks",
@@ -22,7 +25,6 @@ config = {
     "maxsize": 100
 }
 
-from meesee import RedisQueue
 
 # Note that max_allowed should be alteast one less then maxsize of the config
 max_allowed = 10000

@@ -16,9 +16,9 @@ config = {
 
 class RedisQueue:
     def __init__(self, namespace, key, redis_config, maxsize=None, timeout=None):
-        # TCP check if connection is alive, Sane defaults
-        redis_config.setdefault('socket_timeout', 30)
-        redis_config.setdefault('socket_keepalive', True)
+        # TCP check if connection is alive
+        # redis_config.setdefault('socket_timeout', 30)
+        # redis_config.setdefault('socket_keepalive', True)
         # Ping check if connection is alive
         # redis_config.setdefault('health_check_interval', 30)
         self.r = redis.Redis(**redis_config)
@@ -105,7 +105,7 @@ def setup_init_items(func_kwargs, init_kwargs):
     return {name: func_kwargs[name] for name in init_kwargs.keys()}
 
 
-def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs):
+def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs):  # noqa:C901
     if isinstance(func, list):
         func = func[worker_id % len(func)]
     if isinstance(config, list):
@@ -148,7 +148,7 @@ def startapp(func, func_kwargs={}, workers=10, config=config, on_failure_func=No
         try:
             p.starmap(run_worker, args)
         except (KeyboardInterrupt, SystemExit):
-             sys.stdout.write('Starting Graceful exit\n')
-             p.close()
-             p.join()
+            sys.stdout.write('Starting Graceful exit\n')
+            p.close()
+            p.join()
     sys.stdout.write('Clean shut down\n')

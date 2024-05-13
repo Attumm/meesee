@@ -1,4 +1,3 @@
-import time
 from meesee import RedisQueue
 from meesee import startapp
 
@@ -22,13 +21,13 @@ def my_func(item, worker_id):
         print('regression: item is None')
     print('got item {}'.format(locals()))
 
+
 def raise_sys_exit(item, worker_id):
     print('raise sys_exit')
-    raise SystemExit 
+    raise SystemExit
 
 
 if __name__ == "__main__":
     produce(1)
     startapp(raise_sys_exit, workers=1, config=config)
     startapp(my_func, workers=1, config=config)
-

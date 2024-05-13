@@ -2,13 +2,13 @@
 from meesee import RedisQueue, startapp
 
 redis_config = {
-    "host": '127.0.0.1',
+    "host": "127.0.0.1",
     "port": 6380,
     "ssl": True,
-    "ssl_keyfile":'test_redis_key.pem',
-    "ssl_certfile":'test_redis_cert.pem',
-    "ssl_cert_reqs":'required',
-    "ssl_ca_certs":'test_redis_cert.pem'
+    "ssl_keyfile": "test_redis_key.pem",
+    "ssl_certfile": "test_redis_cert.pem",
+    "ssl_cert_reqs": "required",
+    "ssl_ca_certs": "test_redis_cert.pem",
 }
 
 
@@ -28,7 +28,8 @@ def produce(items):
 
 
 def my_func(item, worker_id):
-    print('worker: {worker_id} hello, look at me, msg: {item}'.format(worker_id=worker_id, item=item))
+    print("worker: {worker_id} hello, look at me, msg: {item}".format(worker_id=worker_id, item=item))
+
 
 if __name__ == "__main__":
     # Create self-signed certs
