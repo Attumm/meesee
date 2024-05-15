@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ${{fromJson(env.PYTHON_VERSIONS)}}
+        python-version: ${{fromJson(github.event.repository.environment.PYTHON_VERSIONS)}}
 
     steps:
       - uses: actions/checkout@v4
