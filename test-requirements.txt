@@ -1,1 +1,2 @@
 pylama==8.4.1
+coverage==7.5.1
