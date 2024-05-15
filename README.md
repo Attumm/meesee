@@ -1,5 +1,7 @@
 # Meesee
 [![CI](https://github.com/Attumm/meesee/actions/workflows/ci.yml/badge.svg)](https://github.com/Attumm/meesee/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Attumm/meesee/graph/badge.svg?token=upEkV8OYwI)](https://codecov.io/gh/Attumm/meesee)
+[![Downloads](https://static.pepy.tech/badge/meesee)](https://pepy.tech/project/meesee)
 
 Task queue, Long lived workers process parallelization, with Redis as backend.
 The project is used in production by three different companies.
