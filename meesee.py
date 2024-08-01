@@ -15,6 +15,7 @@ config = {
 
 
 class RedisQueue:
+
     def __init__(self, namespace, key, redis_config, maxsize=None, timeout=None):
         # TCP check if connection is alive
         # redis_config.setdefault('socket_timeout', 30)
@@ -88,6 +89,27 @@ class RedisQueue:
         return self.r.llen(self.list_key)
 
 
+class Meesee:
+    worker_funcs = []
+
+    @classmethod
+    def worker(cls):
+        def decorator(func):
+            cls.worker_funcs.append(func)
+            return func
+        return decorator
+
+    @classmethod
+    def start_workers(cls, workers=10, config=config):
+        n_workers = len(cls.worker_funcs)
+        if n_workers == 0:
+            print("No workers have been assigned with a decorator")
+        if n_workers > workers:
+            print(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}")
+            workers = n_workers
+        startapp(cls.worker_funcs, workers=workers, config=config)
+
+
 class InitFail(Exception):
     pass
 
@@ -143,8 +165,8 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
 
 def startapp(func, func_kwargs={}, workers=10, config=config, on_failure_func=None, init_kwargs={}):
     with Pool(workers) as p:
-        args = ((func, func_kwargs, on_failure_func, config, worker_id, init_kwargs)
-                for worker_id in range(1, workers + 1))
+        args = [(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs)
+                for worker_id in range(1, workers + 1)]
         try:
             p.starmap(run_worker, args)
         except (KeyboardInterrupt, SystemExit):
