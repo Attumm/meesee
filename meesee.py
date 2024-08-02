@@ -7,7 +7,7 @@ import redis
 from multiprocessing import Pool
 
 config = {
-    "namespace": "removeme",
+    "namespace": "main",
     "key": "tasks",
     "redis_config": {},
     "maxsize": 1000,
@@ -90,12 +90,41 @@ class RedisQueue:
 
 
 class Meesee:
-    worker_funcs = []
+    worker_funcs = {}
+
+    def __init__(self, workers=10, namespace="main", timeout=None, redis_config={}):
+        self.workers = workers
+        self.namespace = namespace
+        self.timeout = timeout
+        self.redis_config = redis_config
 
     @classmethod
-    def worker(cls):
+    def produce(cls, queue=None):
         def decorator(func):
-            cls.worker_funcs.append(func)
+            def wrapper(*args, **kwargs):
+                if queue:
+                    config["key"] = queue
+                if "produce_to_" in func.__name__:
+                    config["key"] = func.__name__[len("produce_to_"):]
+                redis_queue = RedisQueue(**config)
+
+                for item in func(*args, **kwargs):
+                    if isinstance(item, (list, dict)):
+                        item = json.dumps(item)
+                    redis_queue.send(item)
+
+            return wrapper
+        return decorator
+
+    @staticmethod
+    def parse_func_name(func):
+        return func.__name__
+
+    @classmethod
+    def worker(cls, queue=None):
+        def decorator(func):
+            parsed_name = queue if queue is not None else cls.parse_func_name(func)
+            cls.worker_funcs[parsed_name] = func
             return func
         return decorator
 
@@ -107,7 +136,24 @@ class Meesee:
         if n_workers > workers:
             print(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}")
             workers = n_workers
-        startapp(cls.worker_funcs, workers=workers, config=config)
+
+        startapp(list(cls.worker_funcs.values()), workers=workers, config=config)
+
+    def push_button(self, workers=None, wait=None):
+        if workers is not None:
+            self.workers = workers
+        configs = [
+            {
+                "key": queue,
+                "namespace": self.namespace,
+                "redis_config": self.redis_config,
+            } for queue in self.__class__.worker_funcs.keys()
+        ]
+        if self.timeout is not None or wait is not None:
+            for config in configs:
+                config["timeout"] = self.timeout or wait
+
+        startapp(list(self.__class__.worker_funcs.values()), workers=self.workers, config=configs)
 
 
 class InitFail(Exception):
