@@ -165,8 +165,8 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
 
 def startapp(func, func_kwargs={}, workers=10, config=config, on_failure_func=None, init_kwargs={}):
     with Pool(workers) as p:
-        args = [(func, func_kwargs, on_failure_func, config, worker_id, init_kwargs)
-                for worker_id in range(1, workers + 1)]
+        args = ((func, func_kwargs, on_failure_func, config, worker_id, init_kwargs)
+                for worker_id in range(1, workers + 1))
         try:
             p.starmap(run_worker, args)
         except (KeyboardInterrupt, SystemExit):
