@@ -110,9 +110,10 @@ class Meesee:
 
     def worker_producer(self, input_queue=None, output_queue=None):
         def decorator(func):
+
             @wraps(func)
             def wrapper(*args, **kwargs):
-                # Producer logic
+
                 config = self.create_produce_config()
                 if output_queue:
                     config["key"] = output_queue
@@ -133,8 +134,6 @@ class Meesee:
                     redis_queue.send(result)
 
                 return result
-
-            # Worker registration
             parsed_name = input_queue if input_queue is not None else self.parse_func_name(func)
             self.worker_funcs[parsed_name] = wrapper
 
@@ -250,6 +249,7 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
             time.sleep(0.1)  # Throttle restarting
 
         if config.get('timeout') is not None:
+            sys.stdout.write('timeout reached worker {worker_id} stopped\n'.format(worker_id=worker_id))
             break
 
 
