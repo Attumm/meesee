@@ -8,8 +8,7 @@ from meesee import Meesee  # noqa: E402
 
 config = {
     "namespace": "removeme",
-    "key": "tasks",
-    "redis_config": {},
+    "key": "tasks", "redis_config": {},
     "maxsize": 100,
     "timeout": 1,
 }
@@ -38,13 +37,19 @@ def produce_some_items(amount):
 
 
 @box.produce()
-def produce_to_foobar(items):
+def produce_to_foo(items):
     return items
+
+
+@box.worker_producer(input_queue="foo", output_queue="foobar")
+def foo(item, worker_id):
+    print(f"{worker_id} {item} foo pass it too foobar")
+    return [item,]
 
 
 if __name__ == '__main__':
     workers = int(sys.argv[sys.argv.index('-w') + 1]) if '-w' in sys.argv else 10
     produce_some_items(10)
     items = [{"name": f"name{i}"} for i in range(10)]
-    produce_to_foobar(items)
+    produce_to_foo(items)
     box.push_button(workers, wait=1)
