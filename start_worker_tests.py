@@ -4,11 +4,12 @@ import io
 import time
 
 import meesee
-from meesee import run_worker, InitFail, RedisQueue
+from meesee import run_worker
 
-# Stub functions
+
 def stub_setup_init_items(func_kwargs, init_kwargs):
     return {name: func_kwargs[name] for name in init_kwargs.keys()}
+
 
 def stub_init_add(func_kwargs, init_items, init_kwargs):
     for name, value in init_items.items():
@@ -17,6 +18,7 @@ def stub_init_add(func_kwargs, init_items, init_kwargs):
         else:
             func_kwargs[name] = value
     return func_kwargs
+
 
 class StubRedisQueue:
     def __init__(self, **config):
@@ -45,7 +47,7 @@ class TestRunWorker(unittest.TestCase):
     def setUp(self):
         self.func_kwargs = {"arg1": "value1", "arg2": "value2", "init_arg": lambda: "init_value"}
         self.init_kwargs = {"init_arg": "init_value"}
-        self.config = {"key": "test_queue", "timeout": 0.1}  # Short timeout for testing
+        self.config = {"key": "test_queue", "timeout": 0.1}
         self.original_stdout = sys.stdout
         sys.stdout = io.StringIO()
 
@@ -117,7 +119,9 @@ class TestRunWorker(unittest.TestCase):
         StubRedisQueue.items = ["item1", "item2"]
         StubRedisQueue.state = "exception"
         StubRedisQueue.iteration_count = 0
+        self.config["timeout"] = 2
         run_worker(stub_func, self.func_kwargs, stub_on_failure_func, self.config, 1, self.init_kwargs)
+        self.config["timeout"] = 0.1
 
         output = sys.stdout.getvalue()
         self.assertIn("worker 1 started", output)
@@ -126,7 +130,8 @@ class TestRunWorker(unittest.TestCase):
 
     def test_timeout(self):
         def stub_func(item, worker_id, **kwargs):
-            time.sleep(0.2)  # Sleep longer than the timeout
+            # Sleep longer than the timeout
+            time.sleep(0.2)
             return f"Processed: {item}"
 
         StubRedisQueue.items = ["item1", "item2"]
