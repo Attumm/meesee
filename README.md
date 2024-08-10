@@ -61,7 +61,7 @@ Great, the placement of both scripts can be on any machine with connectivity to 
 ## Example Usage
 
 Let's use Python to make writing workers and producers more fun.
-Here's a simple example demonstrating how to use Meesee the pythonic way.
+Here's a simple [examples](https://github.com/Attumm/meesee/tree/main/examples/example_decorator_magic_simple.py) demonstrating how to use Meesee the pythonic way.
 
 ```python
 from meesee import Meesee 
