@@ -1,5 +1,9 @@
+import os
 import sys
-from meesee import RedisQueue
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from meesee import RedisQueue  # noqa: E402
 
 config = {
     "namespace": "removeme",

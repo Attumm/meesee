@@ -6,8 +6,10 @@ import redis
 
 from multiprocessing import Pool
 
+from functools import wraps
+
 config = {
-    "namespace": "removeme",
+    "namespace": "main",
     "key": "tasks",
     "redis_config": {},
     "maxsize": 1000,
@@ -15,6 +17,7 @@ config = {
 
 
 class RedisQueue:
+
     def __init__(self, namespace, key, redis_config, maxsize=None, timeout=None):
         # TCP check if connection is alive
         # redis_config.setdefault('socket_timeout', 30)
@@ -88,6 +91,113 @@ class RedisQueue:
         return self.r.llen(self.list_key)
 
 
+class Meesee:
+    worker_funcs = {}
+
+    def __init__(self, workers=10, namespace="main", timeout=None, queue="main", redis_config={}):
+        self.workers = workers
+        self.namespace = namespace
+        self.timeout = timeout
+        self.queue = queue
+        self.redis_config = redis_config
+
+    def create_produce_config(self):
+        return {
+            "key": self.queue,
+            "namespace": self.namespace,
+            "redis_config": self.redis_config,
+        }
+
+    def worker_producer(self, input_queue=None, output_queue=None):
+        def decorator(func):
+
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+
+                config = self.create_produce_config()
+                if output_queue:
+                    config["key"] = output_queue
+                elif "produce_to_" in func.__name__:
+                    config["key"] = func.__name__[len("produce_to_"):]
+
+                redis_queue = RedisQueue(**config)
+                result = func(*args, **kwargs)
+
+                if isinstance(result, (list, tuple)):
+                    for item in result:
+                        if isinstance(item, (list, dict)):
+                            item = json.dumps(item)
+                        redis_queue.send(item)
+                elif result is not None:
+                    if isinstance(result, (list, dict)):
+                        result = json.dumps(result)
+                    redis_queue.send(result)
+
+                return result
+            parsed_name = input_queue if input_queue is not None else self.parse_func_name(func)
+            self.worker_funcs[parsed_name] = wrapper
+
+            return wrapper
+        return decorator
+
+    def produce(self, queue=None):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                config = self.create_produce_config()
+                if queue:
+                    config["key"] = queue
+                if "produce_to_" in func.__name__:
+                    config["key"] = func.__name__[len("produce_to_"):]
+                redis_queue = RedisQueue(**config)
+
+                for item in func(*args, **kwargs):
+                    if isinstance(item, (list, dict)):
+                        item = json.dumps(item)
+                    redis_queue.send(item)
+
+            return wrapper
+        return decorator
+
+    @staticmethod
+    def parse_func_name(func):
+        return func.__name__
+
+    @classmethod
+    def worker(cls, queue=None):
+        def decorator(func):
+            parsed_name = queue if queue is not None else cls.parse_func_name(func)
+            cls.worker_funcs[parsed_name] = func
+            return func
+        return decorator
+
+    @classmethod
+    def start_workers(cls, workers=10, config=config):
+        n_workers = len(cls.worker_funcs)
+        if n_workers == 0:
+            print("No workers have been assigned with a decorator")
+        if n_workers > workers:
+            print(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}")
+            workers = n_workers
+
+        startapp(list(cls.worker_funcs.values()), workers=workers, config=config)
+
+    def push_button(self, workers=None, wait=None):
+        if workers is not None:
+            self.workers = workers
+        configs = [
+            {
+                "key": queue,
+                "namespace": self.namespace,
+                "redis_config": self.redis_config,
+            } for queue in self.__class__.worker_funcs.keys()
+        ]
+        if self.timeout is not None or wait is not None:
+            for config in configs:
+                config["timeout"] = self.timeout or wait
+
+        startapp(list(self.__class__.worker_funcs.values()), workers=self.workers, config=configs)
+
+
 class InitFail(Exception):
     pass
 
@@ -117,7 +227,8 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
         try:
             func_kwargs = init_add(func_kwargs, init_items, init_kwargs)
             r = RedisQueue(**config)  # TODO rename r
-            sys.stdout.write('worker {worker_id} started\n'.format(worker_id=worker_id))
+            sys.stdout.write('worker {worker_id} started. {func_name} listening to {queue} \n'.format(
+                worker_id=worker_id, func_name=func.__name__, queue=config["key"]))
             for key_name, item in r:
                 _, item = func(item.decode('utf-8'), worker_id, **func_kwargs), None
         except InitFail:
@@ -138,6 +249,7 @@ def run_worker(func, func_kwargs, on_failure_func, config, worker_id, init_kwarg
             time.sleep(0.1)  # Throttle restarting
 
         if config.get('timeout') is not None:
+            sys.stdout.write('timeout reached worker {worker_id} stopped\n'.format(worker_id=worker_id))
             break
 
 
