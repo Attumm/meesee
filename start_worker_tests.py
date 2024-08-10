@@ -141,5 +141,49 @@ class TestRunWorker(unittest.TestCase):
         output = sys.stdout.getvalue()
         self.assertIn("timeout reached worker 1 stopped", output)
 
+    def test_multiple_funcs_and_configs(self):
+        def func_a(item, worker_id, **kwargs):
+            return f"func_a processed {item} with worker {worker_id}"
+
+        def func_b(item, worker_id, **kwargs):
+            return f"func_b processed {item} with worker {worker_id}"
+
+        def func_c(item, worker_id, **kwargs):
+            return f"func_c processed {item} with worker {worker_id}"
+
+        funcs = [func_a, func_b, func_c]
+
+        config_a = {"key": "queue_a", "timeout": 0.1}
+        config_b = {"key": "queue_b", "timeout": 0.1}
+        config_c = {"key": "queue_c", "timeout": 0.1}
+
+        configs = [config_a, config_b, config_c]
+
+        def stub_on_failure_func(item, e, r, worker_id):
+            sys.stdout.write(f"Failure handled for item: {item} on worker {worker_id}\n")
+
+        StubRedisQueue.items = ["item1", "item2"]
+        StubRedisQueue.state = "normal"
+
+        # Reset stdout capture for each iteration
+        sys.stdout = io.StringIO()
+
+        for worker_id in range(5):
+            run_worker(funcs, self.func_kwargs, stub_on_failure_func, configs, worker_id, self.init_kwargs)
+
+            output = sys.stdout.getvalue()
+            expected_func = funcs[worker_id % len(funcs)].__name__
+            expected_queue = configs[worker_id % len(configs)]["key"]
+
+            self.assertIn(f"worker {worker_id} started", output)
+            self.assertIn(f"{expected_func} listening to {expected_queue}", output)
+            self.assertIn("timeout reached worker", output)
+
+            if "item1" in output:
+                self.assertIn(f"{expected_func} processed item1 with worker {worker_id}", output)
+            if "item2" in output:
+                self.assertIn(f"{expected_func} processed item2 with worker {worker_id}", output)
+
+
 if __name__ == '__main__':
     unittest.main()
