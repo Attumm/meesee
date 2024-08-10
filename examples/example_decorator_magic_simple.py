@@ -13,6 +13,7 @@ box = Meesee()
 def foobar(item, worker_id):
     print('func: foobar, worker_id: {}, item: {}'.format(worker_id, item))
 
+
 @box.produce()
 def produce_to_foobar(items):
     return items
