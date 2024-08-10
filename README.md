@@ -166,9 +166,9 @@ This will produce to the "foobar" queue.
 def produce_to_foobar():
     yield from [1, 2, 3]
 ```
-By naming our function `produce_to_foobar`, the function will also send the data to the "foobar" queue.
+By naming the function `produce_to_foobar`, the function will also send the data to the "foobar" queue.
 
-For workers, ours are special in that they will start during multiprocessing. Here's an example to start 5 workers. Since we only set up one worker, all workers will be of that type:
+For workers, they are special in that they will start during multiprocessing. Here's an example to start 5 workers. Since we only set up one worker, all workers will be of that type:
 
 ```python
 box.push_button(workers=5, wait=1)
@@ -187,5 +187,5 @@ $ docker run --name some-redis -d redis
 
 ## Support and Resources
 
-- For feature requests, additional information, or to report issues, please utilize our issue tracker
-- Explore our comprehensive [examples](https://github.com/Attumm/meesee/tree/main/examples) for in-depth usage scenarios and best practices
+- For feature requests, additional information or to report issues use github issues.
+- Explore our comprehensive [examples](https://github.com/Attumm/meesee/tree/main/examples) for in-depth usage scenarios and best practices.
