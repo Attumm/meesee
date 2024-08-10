@@ -3,24 +3,30 @@
 [![codecov](https://codecov.io/gh/Attumm/meesee/graph/badge.svg?token=upEkV8OYwI)](https://codecov.io/gh/Attumm/meesee)
 [![Downloads](https://static.pepy.tech/badge/meesee)](https://pepy.tech/project/meesee)
 
-Task queue, Long lived workers process parallelization, with Redis as backend.
-The project is used in production by three different companies.
-There are Meesee instances that have been running without maintenance or restarts for more than one year.
+Meesee is an task queue system featuring long-lived worker process parallelization through multiprocessing, with Redis as its backend. Engineered for reliability, efficiency, and ease of use, Meesee is tailored for distributed computing environments, particularly in big data and mission-critical software applications. By leveraging individual processes for each worker, Meesee circumvents Python's Global Interpreter Lock (GIL), making it ideal for compute intensive tasks.
 
-Since the scope of the project is laser focussed on providing the following usecases.
-There are no outstanding feature requests, the project is stable and no code are needed at the moment.
-For feature request or additional information, an issue could be raised.
-For examples on how to use Meesee there are [examples](https://github.com/Attumm/meesee/tree/main/examples) available.
+## Production Proven
+
+- In active production since 2018, powering the backends of at least three known companies
+- Instances have demonstrated exceptional uptime, running for years without requiring maintenance
+- The only identified scenario necessitating a restart is during network interface changes, which can leave workers connected to a non-functional network—an infrequent occurrence, but noteworthy for systems with multi-year uptime expectations
+- Meesee workers are designed to restart without data loss, ensuring continuity even during rare restart events
 
 
-1. Should be able to run for long periods, without maintenance or restarts.
-2. Restarting the service for maintenance or deployments, should not lead to missing messages.
-3. Should be reasonable fast and minimal amount of memory overhead for client and Redis instance.
-4. Should be able to schedule messages when workers are offline during deployment.
-5. Should not skip messages during certain scenario's such as heavy load.
-6. Should try to be as simple as possible to use, without a big learning curve. Distributed computing is hard enough by itself.
+## Core Design Principles
+
+Meesee was specifically developed to address the following critical challenges in distributed computing:
+
+1. **Long-Term Stability**: Ability to run for extended periods without maintenance or restarts
+2. **Zero Message Loss**: Ensuring no messages are lost during service restarts for maintenance or deployments
+3. **Optimized Performance**: Achieving surprising speed with minimal memory overhead for both client and Redis instances
+4. **Deployment Flexibility**: Capability to schedule messages even when workers are offline during deployment
+5. **Message Integrity Under Load**: Preventing message skips even during high-load scenarios
+6. **Simplicity in Complexity**: Providing an intuitive interface to minimize the learning curve, acknowledging that distributed computing is challenging enough on its own
+
 
 ## Examples
+How to [Examples](https://github.com/Attumm/meesee/tree/main/examples).
 
 Create my_func that will 
 1. print starting message.
@@ -58,10 +64,16 @@ produce(10)
 
 Great, the placement of both scripts can be on any machine with connectivity to the redis instance.
 
+## Install
+
+```
+$ pip install meesee
+```
+
 ## Example Usage
 
 Let's use Python to make writing workers and producers more fun.
-Here's a simple [examples](https://github.com/Attumm/meesee/tree/main/examples/example_decorator_magic_simple.py) demonstrating how to use Meesee the pythonic way.
+Here's a simple [example](https://github.com/Attumm/meesee/tree/main/examples/example_decorator_magic_simple.py) demonstrating how to use Meesee the pythonic way.
 
 ```python
 from meesee import Meesee 
@@ -164,14 +176,6 @@ box.push_button(workers=5, wait=1)
 
 This will start 5 worker processes, each listening to the queue specified in the worker function.
 
-### Installing
-
-Install meesee:
-
-```
-$ pip install meesee
-```
-
 ### Prerequisites
 
 #### Redis instance
@@ -181,21 +185,7 @@ For Docker
 $ docker run --name some-redis -d redis
 ```
 
-For Debian, Ubuntu
-```
-$ sudo apt-get install redis-server
-```
-For Centos, Red Hat
-```
-$ sudo yum install redis
-```
+## Support and Resources
 
-## Authors
-
-* **Melvin Bijman** 
-* **Mark Moes**
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-
+- For feature requests, additional information, or to report issues, please utilize our issue tracker
+- Explore our comprehensive [examples](https://github.com/Attumm/meesee/tree/main/examples) for in-depth usage scenarios and best practices
