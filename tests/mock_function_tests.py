@@ -1,11 +1,10 @@
-import redis
-import uuid
 import json
 
 import unittest
 
-from unittest.mock import patch, MagicMock
-from meesee import Meesee, config
+from unittest.mock import patch
+from meesee import Meesee
+
 
 class TestWorkerProducerLineCoverage(unittest.TestCase):
     def setUp(self):
@@ -64,6 +63,7 @@ class TestWorkerProducerLineCoverage(unittest.TestCase):
         self.assertIn("produce_to_qux", self.box.worker_funcs)
 
         mock_redis_queue.return_value.send.assert_any_call(json.dumps({"key": "test_data"}))
+
 
 if __name__ == '__main__':
     unittest.main()

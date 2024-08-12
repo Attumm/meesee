@@ -15,6 +15,7 @@ config = {
 
 box = Meesee(config)
 
+
 @box.worker()
 def func_a(item, worker_id):
     print('func: {}, worker_id: {}, item: {}'.format('func_a', worker_id, item))
