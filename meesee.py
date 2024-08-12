@@ -171,9 +171,9 @@ class Meesee:
     def start_workers(self, workers=10, config=config):
         n_workers = len(self.worker_funcs)
         if n_workers == 0:
-            print("No workers have been assigned with a decorator")
+            sys.stdout.write("No workers have been assigned with a decorator\n")
         if n_workers > workers:
-            print(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}")
+            sys.stdout.write(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}\n")
             workers = n_workers
 
         startapp(list(self.worker_funcs.values()), workers=workers, config=config)
