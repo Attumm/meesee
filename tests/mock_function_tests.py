@@ -7,8 +7,7 @@ from unittest.mock import patch, MagicMock, call
 
 from meesee import Meesee, config
 from meesee import init_add, setup_init_items, InitFail
-from meesee import startapp
-from meesee import run_worker
+from meesee import startapp, run_worker, RedisQueue
 
 
 class TestWorkerProducerLineCoverage(unittest.TestCase):
@@ -292,6 +291,77 @@ class TestRunWorker(unittest.TestCase):
         run_worker(mock_func, {}, None, config, 1, {})
         mock_stdout_write.assert_any_call('worker 1 stopped\n')
         mock_redis_queue.return_value.first_inline_send.assert_called_once_with(b'test_item2')
+
+
+class TestRedisQueueCoverage(unittest.TestCase):
+
+    @patch('meesee.redis.Redis')
+    def setUp(self, mock_redis):
+        self.mock_redis = mock_redis.return_value
+        self.queue = RedisQueue('test_namespace', 'test_key', {}, maxsize=10, timeout=5)
+
+    def test_init(self):
+        self.assertEqual(self.queue.namespace, 'test_namespace')
+        self.assertEqual(self.queue.key, 'test_key')
+        self.assertEqual(self.queue.maxsize, 10)
+        self.assertEqual(self.queue.timeout, 5)
+
+    def test_format_list_key(self):
+        self.assertEqual(self.queue.format_list_key('ns', 'key'), 'ns:key')
+
+    def test_set_list_key(self):
+        self.queue.set_list_key('new_key', 'new_namespace')
+        self.assertEqual(self.queue.list_key, 'new_namespace:new_key')
+
+    def test_first_inline_send(self):
+        self.queue.first_inline_send('item')
+        self.mock_redis.lpush.assert_called_once_with(self.queue.list_key, 'item')
+
+    def test_send_to(self):
+        self.queue.send_to('other_key', 'item')
+        self.mock_redis.rpush.assert_called_once_with('test_namespace:other_key', 'item')
+
+    def test_send(self):
+        self.mock_redis.llen.return_value = 5
+        self.queue.send('item')
+        self.mock_redis.rpush.assert_called_once_with(self.queue.list_key, 'item')
+
+    def test_send_maxsize_reached(self):
+        self.mock_redis.llen.return_value = 10
+        self.queue.send('item')
+        self.mock_redis.lpop.assert_called_once_with(self.queue.list_key)
+        self.mock_redis.rpush.assert_called_once_with(self.queue.list_key, 'item')
+
+    def test_send_unsafe(self):
+        self.queue.send_unsafe('item')
+        self.mock_redis.rpush.assert_called_once_with(self.queue.list_key, 'item')
+
+    @patch('time.sleep')
+    def test_send_wait(self, mock_sleep):
+        self.mock_redis.llen.side_effect = [10, 10, 9]
+        self.queue.send_wait('item')
+        self.assertEqual(mock_sleep.call_count, 2)
+        self.mock_redis.rpush.assert_called_once_with(self.queue.list_key, 'item')
+
+    def test_send_dict(self):
+        self.queue.send_dict({'key': 'value'})
+        self.mock_redis.rpush.assert_called_once_with(self.queue.list_key, json.dumps({'key': 'value'}))
+
+    def test_iter(self):
+        self.assertIsInstance(iter(self.queue), RedisQueue)
+
+    def test_next(self):
+        self.mock_redis.blpop.return_value = ('key', 'value')
+        self.assertEqual(next(self.queue), ('key', 'value'))
+
+    def test_next_stop_iteration(self):
+        self.mock_redis.blpop.return_value = None
+        with self.assertRaises(StopIteration):
+            next(self.queue)
+
+    def test_len(self):
+        self.mock_redis.llen.return_value = 5
+        self.assertEqual(len(self.queue), 5)
 
 
 if __name__ == '__main__':
