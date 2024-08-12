@@ -13,22 +13,24 @@ config = {
     "timeout": 1,
 }
 
+box = Meesee(config)
 
-@Meesee.worker()
+
+@box.worker()
 def func_a(item, worker_id):
     print('func: {}, worker_id: {}, item: {}'.format('func_a', worker_id, item))
 
 
-@Meesee.worker()
+@box.worker()
 def func_b(item, worker_id):
     print('func: {}, worker_id: {}, item: {}'.format('func_b', worker_id, item))
 
 
-@Meesee.worker()
+@box.worker()
 def func_c(item, worker_id):
     print('func: {}, worker_id: {}, item: {}'.format('func_c', worker_id, item))
 
 
 if __name__ == '__main__':
     workers = int(sys.argv[sys.argv.index('-w') + 1]) if '-w' in sys.argv else 10
-    Meesee.start_workers(workers=workers, config=config)
+    box.start_workers(workers=workers, config=config)

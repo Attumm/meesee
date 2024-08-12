@@ -92,7 +92,6 @@ class RedisQueue:
 
 
 class Meesee:
-    worker_funcs = {}
 
     def __init__(self, workers=10, namespace="main", timeout=None, queue="main", redis_config={}):
         self.workers = workers
@@ -100,6 +99,7 @@ class Meesee:
         self.timeout = timeout
         self.queue = queue
         self.redis_config = redis_config
+        self.worker_funcs = {}
 
     def create_produce_config(self):
         return {
@@ -158,28 +158,25 @@ class Meesee:
             return wrapper
         return decorator
 
-    @staticmethod
-    def parse_func_name(func):
+    def parse_func_name(self, func):
         return func.__name__
 
-    @classmethod
-    def worker(cls, queue=None):
+    def worker(self, queue=None):
         def decorator(func):
-            parsed_name = queue if queue is not None else cls.parse_func_name(func)
-            cls.worker_funcs[parsed_name] = func
+            parsed_name = queue if queue is not None else self.parse_func_name(func)
+            self.worker_funcs[parsed_name] = func
             return func
         return decorator
 
-    @classmethod
-    def start_workers(cls, workers=10, config=config):
-        n_workers = len(cls.worker_funcs)
+    def start_workers(self, workers=10, config=config):
+        n_workers = len(self.worker_funcs)
         if n_workers == 0:
             print("No workers have been assigned with a decorator")
         if n_workers > workers:
             print(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}")
             workers = n_workers
 
-        startapp(list(cls.worker_funcs.values()), workers=workers, config=config)
+        startapp(list(self.worker_funcs.values()), workers=workers, config=config)
 
     def push_button(self, workers=None, wait=None):
         if workers is not None:
@@ -189,13 +186,13 @@ class Meesee:
                 "key": queue,
                 "namespace": self.namespace,
                 "redis_config": self.redis_config,
-            } for queue in self.__class__.worker_funcs.keys()
+            } for queue in self.worker_funcs.keys()
         ]
         if self.timeout is not None or wait is not None:
             for config in configs:
                 config["timeout"] = self.timeout or wait
 
-        startapp(list(self.__class__.worker_funcs.values()), workers=self.workers, config=configs)
+        startapp(list(self.worker_funcs.values()), workers=self.workers, config=configs)
 
 
 class InitFail(Exception):
