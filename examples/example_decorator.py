@@ -5,15 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from meesee import Meesee  # noqa: E402
 
-config = {
-    "namespace": "removeme",
-    "key": "tasks",
-    "redis_config": {},
-    "maxsize": 100,
-    "timeout": 1,
-}
-
-box = Meesee(config)
+box = Meesee()
 
 
 @box.worker()

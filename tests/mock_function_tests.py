@@ -62,9 +62,9 @@ class TestWorkerProducerLineCoverage(unittest.TestCase):
 
         mock_redis_queue.assert_called()
         mock_redis_queue.return_value.send.assert_called()
-        self.assertIn("foo", self.box.worker_funcs)
-        self.assertIn("bar", self.box.worker_funcs)
-        self.assertIn("produce_to_qux", self.box.worker_funcs)
+        self.assertIn("foo", self.box._worker_funcs)
+        self.assertIn("bar", self.box._worker_funcs)
+        self.assertIn("produce_to_qux", self.box._worker_funcs)
 
         mock_redis_queue.return_value.send.assert_any_call(json.dumps({"key": "test_data"}))
 
@@ -76,7 +76,7 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_no_workers(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {}
+        self.box._worker_funcs = {}
         self.box.start_workers()
         mock_stdout_write.assert_called_once_with("No workers have been assigned with a decorator\n")
         mock_startapp.assert_called_once_with(
@@ -88,11 +88,11 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_enough_workers(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock()}
+        self.box._worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock()}
         self.box.start_workers(workers=3)
         mock_stdout_write.assert_not_called()
         mock_startapp.assert_called_once_with(
-            list(self.box.worker_funcs.values()),
+            list(self.box._worker_funcs.values()),
             workers=3,
             config=config,
         )
@@ -100,13 +100,13 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_not_enough_workers(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock(), 'worker3': MagicMock()}
+        self.box._worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock(), 'worker3': MagicMock()}
         self.box.start_workers(workers=2)
         mock_stdout_write.assert_called_once_with(
             "Not enough workers, increasing the workers started with: 2 we need atleast: 3\n"
         )
         mock_startapp.assert_called_once_with(
-            list(self.box.worker_funcs.values()),
+            list(self.box._worker_funcs.values()),
             workers=3,
             config=config,
         )
@@ -114,12 +114,12 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_custom_config(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {'worker1': MagicMock()}
+        self.box._worker_funcs = {'worker1': MagicMock()}
         custom_config = {'custom': 'config'}
         self.box.start_workers(workers=1, config=custom_config)
         mock_stdout_write.assert_not_called()
         mock_startapp.assert_called_once_with(
-            list(self.box.worker_funcs.values()),
+            list(self.box._worker_funcs.values()),
             workers=1,
             config=custom_config
         )
