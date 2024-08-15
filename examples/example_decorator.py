@@ -25,4 +25,4 @@ def func_c(item, worker_id):
 
 if __name__ == '__main__':
     workers = int(sys.argv[sys.argv.index('-w') + 1]) if '-w' in sys.argv else 10
-    box.start_workers(workers=workers, config=config)
+    box.push_button(workers=workers)

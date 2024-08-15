@@ -364,5 +364,78 @@ class TestRedisQueueCoverage(unittest.TestCase):
         self.assertEqual(len(self.queue), 5)
 
 
+class TestProduceToDecorator(unittest.TestCase):
+    def setUp(self):
+        self.box = Meesee(workers=5, namespace="test", timeout=2)
+
+    @patch('meesee.RedisQueue')
+    def test_produce_to_decorator(self, mock_redis_queue):
+        # Mock the RedisQueue instance
+        mock_queue_instance = MagicMock()
+        mock_redis_queue.return_value = mock_queue_instance
+
+        # Define a function decorated with produce_to
+        @self.box.produce_to()
+        def produce_multi(items):
+            return items
+
+        # Test data
+        items = [
+            ("foo1", "item1"),
+            ("foo2", {"key": "item2"}),
+            ("foo3", ["item3", "item3b"]),
+            ("foo1", "item4"),
+            ("foo2", "item5"),
+            ("foo3", "item6"),
+        ]
+
+        # Call the decorated function
+        produce_multi(items)
+
+        # Assertions
+        self.assertEqual(mock_redis_queue.call_count, 1)
+        self.assertEqual(mock_queue_instance.send_to.call_count, len(items))
+
+        # Check if send_to was called with correct arguments for each item
+        expected_calls = [
+            (("foo1", "item1")),
+            (("foo2", json.dumps({"key": "item2"}))),
+            (("foo3", json.dumps(["item3", "item3b"]))),
+            (("foo1", "item4")),
+            (("foo2", "item5")),
+            (("foo3", "item6")),
+        ]
+
+        for (queue, item), result in zip(expected_calls, mock_queue_instance.send_to.call_args_list):
+            self.assertEqual(result[0][0], queue)
+            self.assertEqual(result[0][1], item)
+
+    @patch('meesee.RedisQueue')
+    def test_produce_to_with_custom_function(self, mock_redis_queue):
+        mock_queue_instance = MagicMock()
+        mock_redis_queue.return_value = mock_queue_instance
+
+        @self.box.produce_to()
+        def custom_produce():
+            yield "queue1", "item1"
+            yield "queue2", {"key": "item2"}
+            yield "queue3", ["item3", "item3b"]
+
+        custom_produce()
+
+        self.assertEqual(mock_redis_queue.call_count, 1)
+        self.assertEqual(mock_queue_instance.send_to.call_count, 3)
+
+        expected_calls = [
+            (("queue1", "item1")),
+            (("queue2", json.dumps({"key": "item2"}))),
+            (("queue3", json.dumps(["item3", "item3b"]))),
+        ]
+
+        for (queue, item), result in zip(expected_calls, mock_queue_instance.send_to.call_args_list):
+            self.assertEqual(result[0][0], queue)
+            self.assertEqual(result[0][1], item)
+
+
 if __name__ == '__main__':
     unittest.main()

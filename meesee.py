@@ -158,6 +158,57 @@ class Meesee:
             return wrapper
         return decorator
 
+    def produce_to(self):
+        """
+        Produce items to be sent to specific queues.
+        Send items to its corresponding queue using a RedisQueue.
+
+        The decorated function should yield tuples of (queue_name, item_value).
+
+        Example:
+            @box.produce_to()
+            def produce_multi(items):
+                return items
+
+            items = [
+                ("foo1", "item1"),
+                ("foo2", "item2"),
+                ("foo3", "item3"),
+                ("foo1", "item4"),
+                ("foo2", "item5"),
+                ("foo3", "item6"),
+            ]
+            produce_multi(items)
+
+        In this example:
+        - Each tuple in the `items` list represents a (queue, value) pair.
+        - The first element of each tuple ("foo1", "foo2", "foo3") is the queue name.
+        - The second element of each tuple ("item1", "item2", etc.) is the value to be sent to the queue.
+
+        The decorator will process these items as follows:
+        1. "item1" will be sent to the "foo1" queue
+        2. "item2" will be sent to the "foo2" queue
+        3. "item3" will be sent to the "foo3" queue
+        4. "item4" will be sent to the "foo1" queue
+        5. "item5" will be sent to the "foo2" queue
+        6. "item6" will be sent to the "foo3" queue
+
+        Notes:
+        - If an item is a list or dict, it will be JSON-encoded before being sent to the queue.
+        """
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                config = self.create_produce_config()
+                redis_queue = RedisQueue(**config)
+
+                for queue, item in func(*args, **kwargs):
+                    if isinstance(item, (list, dict)):
+                        item = json.dumps(item)
+                    redis_queue.send_to(queue, item)
+
+            return wrapper
+        return decorator
+
     def parse_func_name(self, func):
         return func.__name__
 
