@@ -14,7 +14,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    version='1.5.0',
+    version='1.6.0',
     py_modules=['meesee'],
     install_requires=['redis==4.5.5'],
     python_requires='>3.5',

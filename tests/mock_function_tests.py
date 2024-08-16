@@ -62,9 +62,9 @@ class TestWorkerProducerLineCoverage(unittest.TestCase):
 
         mock_redis_queue.assert_called()
         mock_redis_queue.return_value.send.assert_called()
-        self.assertIn("foo", self.box.worker_funcs)
-        self.assertIn("bar", self.box.worker_funcs)
-        self.assertIn("produce_to_qux", self.box.worker_funcs)
+        self.assertIn("foo", self.box._worker_funcs)
+        self.assertIn("bar", self.box._worker_funcs)
+        self.assertIn("produce_to_qux", self.box._worker_funcs)
 
         mock_redis_queue.return_value.send.assert_any_call(json.dumps({"key": "test_data"}))
 
@@ -76,7 +76,7 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_no_workers(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {}
+        self.box._worker_funcs = {}
         self.box.start_workers()
         mock_stdout_write.assert_called_once_with("No workers have been assigned with a decorator\n")
         mock_startapp.assert_called_once_with(
@@ -88,11 +88,11 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_enough_workers(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock()}
+        self.box._worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock()}
         self.box.start_workers(workers=3)
         mock_stdout_write.assert_not_called()
         mock_startapp.assert_called_once_with(
-            list(self.box.worker_funcs.values()),
+            list(self.box._worker_funcs.values()),
             workers=3,
             config=config,
         )
@@ -100,13 +100,13 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_not_enough_workers(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock(), 'worker3': MagicMock()}
+        self.box._worker_funcs = {'worker1': MagicMock(), 'worker2': MagicMock(), 'worker3': MagicMock()}
         self.box.start_workers(workers=2)
         mock_stdout_write.assert_called_once_with(
             "Not enough workers, increasing the workers started with: 2 we need atleast: 3\n"
         )
         mock_startapp.assert_called_once_with(
-            list(self.box.worker_funcs.values()),
+            list(self.box._worker_funcs.values()),
             workers=3,
             config=config,
         )
@@ -114,12 +114,12 @@ class TestStartWorkers(unittest.TestCase):
     @patch('meesee.startapp')
     @patch('sys.stdout.write')
     def test_start_workers_custom_config(self, mock_stdout_write, mock_startapp):
-        self.box.worker_funcs = {'worker1': MagicMock()}
+        self.box._worker_funcs = {'worker1': MagicMock()}
         custom_config = {'custom': 'config'}
         self.box.start_workers(workers=1, config=custom_config)
         mock_stdout_write.assert_not_called()
         mock_startapp.assert_called_once_with(
-            list(self.box.worker_funcs.values()),
+            list(self.box._worker_funcs.values()),
             workers=1,
             config=custom_config
         )
@@ -362,6 +362,79 @@ class TestRedisQueueCoverage(unittest.TestCase):
     def test_len(self):
         self.mock_redis.llen.return_value = 5
         self.assertEqual(len(self.queue), 5)
+
+
+class TestProduceToDecorator(unittest.TestCase):
+    def setUp(self):
+        self.box = Meesee(workers=5, namespace="test", timeout=2)
+
+    @patch('meesee.RedisQueue')
+    def test_produce_to_decorator(self, mock_redis_queue):
+        # Mock the RedisQueue instance
+        mock_queue_instance = MagicMock()
+        mock_redis_queue.return_value = mock_queue_instance
+
+        # Define a function decorated with produce_to
+        @self.box.produce_to()
+        def produce_multi(items):
+            return items
+
+        # Test data
+        items = [
+            ("foo1", "item1"),
+            ("foo2", {"key": "item2"}),
+            ("foo3", ["item3", "item3b"]),
+            ("foo1", "item4"),
+            ("foo2", "item5"),
+            ("foo3", "item6"),
+        ]
+
+        # Call the decorated function
+        produce_multi(items)
+
+        # Assertions
+        self.assertEqual(mock_redis_queue.call_count, 1)
+        self.assertEqual(mock_queue_instance.send_to.call_count, len(items))
+
+        # Check if send_to was called with correct arguments for each item
+        expected_calls = [
+            (("foo1", "item1")),
+            (("foo2", json.dumps({"key": "item2"}))),
+            (("foo3", json.dumps(["item3", "item3b"]))),
+            (("foo1", "item4")),
+            (("foo2", "item5")),
+            (("foo3", "item6")),
+        ]
+
+        for (queue, item), result in zip(expected_calls, mock_queue_instance.send_to.call_args_list):
+            self.assertEqual(result[0][0], queue)
+            self.assertEqual(result[0][1], item)
+
+    @patch('meesee.RedisQueue')
+    def test_produce_to_with_custom_function(self, mock_redis_queue):
+        mock_queue_instance = MagicMock()
+        mock_redis_queue.return_value = mock_queue_instance
+
+        @self.box.produce_to()
+        def custom_produce():
+            yield "queue1", "item1"
+            yield "queue2", {"key": "item2"}
+            yield "queue3", ["item3", "item3b"]
+
+        custom_produce()
+
+        self.assertEqual(mock_redis_queue.call_count, 1)
+        self.assertEqual(mock_queue_instance.send_to.call_count, 3)
+
+        expected_calls = [
+            (("queue1", "item1")),
+            (("queue2", json.dumps({"key": "item2"}))),
+            (("queue3", json.dumps(["item3", "item3b"]))),
+        ]
+
+        for (queue, item), result in zip(expected_calls, mock_queue_instance.send_to.call_args_list):
+            self.assertEqual(result[0][0], queue)
+            self.assertEqual(result[0][1], item)
 
 
 if __name__ == '__main__':
