@@ -99,7 +99,7 @@ class Meesee:
         self.timeout = timeout
         self.queue = queue
         self.redis_config = redis_config
-        self.worker_funcs = {}
+        self._worker_funcs = {}
 
     def create_produce_config(self):
         return {
@@ -135,7 +135,7 @@ class Meesee:
 
                 return result
             parsed_name = input_queue if input_queue is not None else self.parse_func_name(func)
-            self.worker_funcs[parsed_name] = wrapper
+            self._worker_funcs[parsed_name] = wrapper
 
             return wrapper
         return decorator
@@ -158,25 +158,76 @@ class Meesee:
             return wrapper
         return decorator
 
+    def produce_to(self):
+        """
+        Produce items to be sent to specific queues.
+        Send items to its corresponding queue using a RedisQueue.
+
+        The decorated function should yield tuples of (queue_name, item_value).
+
+        Example:
+            @box.produce_to()
+            def produce_multi(items):
+                return items
+
+            items = [
+                ("foo1", "item1"),
+                ("foo2", "item2"),
+                ("foo3", "item3"),
+                ("foo1", "item4"),
+                ("foo2", "item5"),
+                ("foo3", "item6"),
+            ]
+            produce_multi(items)
+
+        In this example:
+        - Each tuple in the `items` list represents a (queue, value) pair.
+        - The first element of each tuple ("foo1", "foo2", "foo3") is the queue name.
+        - The second element of each tuple ("item1", "item2", etc.) is the value to be sent to the queue.
+
+        The decorator will process these items as follows:
+        1. "item1" will be sent to the "foo1" queue
+        2. "item2" will be sent to the "foo2" queue
+        3. "item3" will be sent to the "foo3" queue
+        4. "item4" will be sent to the "foo1" queue
+        5. "item5" will be sent to the "foo2" queue
+        6. "item6" will be sent to the "foo3" queue
+
+        Notes:
+        - If an item is a list or dict, it will be JSON-encoded before being sent to the queue.
+        """
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                config = self.create_produce_config()
+                redis_queue = RedisQueue(**config)
+
+                for queue, item in func(*args, **kwargs):
+                    if isinstance(item, (list, dict)):
+                        item = json.dumps(item)
+                    redis_queue.send_to(queue, item)
+
+            return wrapper
+        return decorator
+
     def parse_func_name(self, func):
         return func.__name__
 
     def worker(self, queue=None):
         def decorator(func):
             parsed_name = queue if queue is not None else self.parse_func_name(func)
-            self.worker_funcs[parsed_name] = func
+            self._worker_funcs[parsed_name] = func
             return func
         return decorator
 
     def start_workers(self, workers=10, config=config):
-        n_workers = len(self.worker_funcs)
+        n_workers = len(self._worker_funcs)
         if n_workers == 0:
             sys.stdout.write("No workers have been assigned with a decorator\n")
         if n_workers > workers:
             sys.stdout.write(f"Not enough workers, increasing the workers started with: {workers} we need atleast: {n_workers}\n")
             workers = n_workers
 
-        startapp(list(self.worker_funcs.values()), workers=workers, config=config)
+        startapp(list(self._worker_funcs.values()), workers=workers, config=config)
 
     def push_button(self, workers=None, wait=None):
         if workers is not None:
@@ -186,13 +237,13 @@ class Meesee:
                 "key": queue,
                 "namespace": self.namespace,
                 "redis_config": self.redis_config,
-            } for queue in self.worker_funcs.keys()
+            } for queue in self._worker_funcs.keys()
         ]
         if self.timeout is not None or wait is not None:
             for config in configs:
                 config["timeout"] = self.timeout or wait
 
-        startapp(list(self.worker_funcs.values()), workers=self.workers, config=configs)
+        startapp(list(self._worker_funcs.values()), workers=self.workers, config=configs)
 
 
 class InitFail(Exception):
