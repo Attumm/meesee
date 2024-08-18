@@ -219,6 +219,26 @@ class Meesee:
             return func
         return decorator
 
+    def collector(self, wait=10, until=float('inf'), queue=None):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                parsed_name = queue if queue is not None else self.parse_func_name(func)
+                config = {
+                    "key": parsed_name,
+                    "namespace": self.namespace,
+                    "timeout": kwargs.pop("wait", None) or wait,
+                    "redis_config": self.redis_config,
+                }
+                r = RedisQueue(**config)
+                results = []
+                for _, item in r:
+                    results.append(item.decode('utf-8'))                
+                    if len(results) >= until:
+                        break
+                return func(results)
+            return wrapper
+        return decorator
+
     def start_workers(self, workers=10, config=config):
         n_workers = len(self._worker_funcs)
         if n_workers == 0:
